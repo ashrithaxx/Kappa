@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kappa - Monte Carlo Risk &amp; Derivatives Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,500&family=EB+Garamond:ital@0;1&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=ranade@400,500,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+:root{
+  --bg:#0a0908; --bg2:#121010; --panel:rgba(255,255,255,.045); --panel-hi:rgba(255,255,255,.075);
+  --line:rgba(255,255,255,.10); --line-hi:rgba(255,255,255,.18);
+  --copper:#ff8a5c; --copper-dim:#a85f3d; --violet:#b9a3ec; --wine:#7a2e3a;
+  --gold:#e3b563; --gold-dim:#b6893f; --red:#ef6d6d;
+  --text:#f4efe6; --text-dim:#a89f95; --text-faint:#6e6560;
+  --serif:'Ranade','EB Garamond',serif; --sans:'Inter',sans-serif; --nav:'Raleway',sans-serif; --italic:'Playfair Display',serif;
+  --condensed:Georgia,serif;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--sans);
+  min-height:100vh; overflow-x:hidden; position:relative;
+}
+.mono{font-family:var(--sans);}
+
+/* ---------- fluid animated background ---------- */
+#bg-layer{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
+#bg-layer .blob{position:absolute; border-radius:50%; filter:blur(90px); opacity:.55; will-change:transform;}
+.blob-1{width:52vw; height:52vw; left:-12vw; top:-14vw; background:radial-gradient(circle,var(--copper),transparent 70%); animation:drift1 26s ease-in-out infinite;}
+.blob-2{width:44vw; height:44vw; right:-10vw; top:8vw; background:radial-gradient(circle,var(--wine),transparent 70%); animation:drift2 32s ease-in-out infinite;}
+.blob-3{width:40vw; height:40vw; left:20vw; bottom:-18vw; background:radial-gradient(circle,var(--violet),transparent 72%); opacity:.35; animation:drift3 38s ease-in-out infinite;}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(6vw,8vw) scale(1.12);}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-7vw,-5vw) scale(0.9);}}
+@keyframes drift3{0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(4vw,-6vw) scale(1.08);}}
+#bg-layer .grain{position:absolute; inset:0; opacity:.05; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+#bg-layer .grid{position:absolute; inset:0; opacity:.05;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:56px 56px;}
+#bg-layer svg.wave{position:absolute; bottom:-2px; left:0; width:100%; opacity:.18;}
+
+/* ---------- glass shell ---------- */
+header{position:sticky; top:0; z-index:20; backdrop-filter:blur(18px) saturate(140%); background:rgba(10,9,8,.55);
+  border-bottom:1px solid var(--line); padding:18px 32px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+.brand{display:flex; align-items:center; gap:10px; cursor:pointer;}
+.brand .mark{display:flex; align-items:center; justify-content:center;
+  font-family:var(--italic); font-style:italic; font-size:26px; font-weight:500; color:var(--copper); line-height:1;}
+header h1{font-family:var(--condensed); font-size:19px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;}
+header .tick{font-family:var(--nav); font-size:11px; letter-spacing:.12em; color:var(--text-faint); text-transform:uppercase;}
+nav{position:sticky; top:63px; z-index:19; display:flex; backdrop-filter:blur(18px); background:rgba(10,9,8,.4);
+  border-bottom:1px solid var(--line); padding:0 32px; gap:2px; overflow-x:auto;}
+nav button{flex:1 1 0; background:none; border:none; color:var(--text-dim); font-family:var(--nav); font-weight:600;
+  font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:14px 18px; cursor:pointer;
+  border-bottom:2px solid transparent; white-space:nowrap; text-align:center; transition:color .25s;}
+nav button.active{color:var(--copper); border-bottom-color:var(--copper);}
+nav button:hover:not(.active){color:var(--text);}
+main{position:relative; z-index:1; padding:28px 32px 80px; max-width:1280px; margin:0 auto;}
+.view{display:none;}
+.view.active{display:block; animation:fadeUp .5s ease both;}
+@keyframes fadeUp{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+.grid{display:grid; grid-template-columns:340px 1fr; gap:24px;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;} nav{top:57px;}}
+
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px;
+  backdrop-filter:blur(22px) saturate(130%); box-shadow:0 10px 40px rgba(0,0,0,.35); transition:border-color .3s,transform .3s;}
+.panel:hover{border-color:var(--line-hi);}
+.panel h2{font-family:var(--condensed); font-size:14px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-faint); margin-bottom:16px; font-weight:700;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-family:var(--condensed); font-weight:600; font-size:12.5px; letter-spacing:.03em; color:var(--text-dim); margin-bottom:5px;}
+.field input, .field select{width:100%; background:rgba(0,0,0,.18); border:1px solid var(--line); color:#fdfaf4;
+  padding:9px 11px; border-radius:8px; font-family:var(--condensed); font-size:14.5px; font-weight:600; letter-spacing:.02em; transition:border-color .2s,background .2s;}
+.field input:focus, .field select:focus{outline:none; border-color:var(--copper); background:rgba(0,0,0,.24);}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.asset-row{border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:8px; position:relative; background:rgba(255,255,255,.02);}
+.asset-row .rm{position:absolute; top:8px; right:10px; background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:14px;}
+.asset-row .rm:hover{color:var(--red);}
+.btn-add{width:100%; background:none; border:1px dashed var(--line); color:var(--text-dim); padding:9px; border-radius:8px;
+  cursor:pointer; font-size:12px; margin-bottom:14px; font-family:var(--nav); letter-spacing:.04em; transition:.2s;}
+.btn-add:hover{border-color:var(--copper-dim); color:var(--copper);}
+.btn-run{width:100%; background:linear-gradient(135deg,var(--copper),#e8734a); border:none; color:#1a0f08; font-weight:700;
+  padding:12px; border-radius:10px; cursor:pointer; font-size:12.5px; letter-spacing:.05em; font-family:var(--nav);
+  text-transform:uppercase; box-shadow:0 8px 24px rgba(255,138,92,.25); transition:transform .2s,box-shadow .2s;}
+.btn-run:hover{transform:translateY(-1px); box-shadow:0 10px 30px rgba(255,138,92,.4);}
+.btn-run:disabled{opacity:.6; cursor:wait;}
+.results{min-height:400px;}
+.stat-strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--line);
+  border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-bottom:20px;}
+.stat{position:relative; overflow:hidden; cursor:help;
+  background:rgba(255,255,255,.055); padding:15px 17px; backdrop-filter:blur(26px) saturate(180%);
+  transition:transform .25s ease,box-shadow .25s ease,background .25s ease; z-index:1;}
+.stat::before{content:''; position:absolute; top:-60%; left:-30%; width:70%; height:220%;
+  background:linear-gradient(120deg,rgba(255,255,255,.12),transparent 60%); transform:rotate(18deg); pointer-events:none;}
+.stat:hover{transform:translateY(-3px); box-shadow:0 14px 34px rgba(0,0,0,.4); background:rgba(255,255,255,.09);}
+.stat .label{position:relative; font-family:var(--condensed); font-weight:600; font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;}
+.stat .value{position:relative; font-family:var(--condensed); font-size:23px; font-weight:700; letter-spacing:.01em; color:#fdfaf4;}
+.stat .value.pos{color:#8fd4c1;} .stat .value.neg{color:var(--red);}
+.stat[data-tip]:hover::after{content:attr(data-tip); position:absolute; left:50%; bottom:calc(100% + 10px); transform:translateX(-50%);
+  width:210px; background:rgba(14,11,9,.97); color:var(--text); font-family:var(--sans); font-weight:400; font-size:11.5px; line-height:1.55;
+  padding:10px 12px; border-radius:10px; border:1px solid var(--line-hi); box-shadow:0 14px 34px rgba(0,0,0,.5);
+  text-transform:none; letter-spacing:normal; z-index:30; pointer-events:none;}
+.stat[data-tip]:hover::before{content:''; position:absolute; left:50%; bottom:calc(100% + 4px); transform:translateX(-50%);
+  border:6px solid transparent; border-top-color:rgba(14,11,9,.97); z-index:30;}
+.chart-box{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:20px;
+  backdrop-filter:blur(22px) saturate(130%); box-shadow:0 10px 40px rgba(0,0,0,.3);}
+.chart-box h3{font-family:var(--condensed); font-size:13.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint); padding:6px 10px 0;}
+.placeholder{color:var(--text-faint); font-size:13px; text-align:center; padding:80px 20px; font-family:var(--italic); font-style:italic;}
+.error-box{background:rgba(239,109,109,.1); border:1px solid var(--red); color:#f5b3b3; padding:12px 16px; border-radius:10px; font-size:13px; margin-bottom:16px;}
+.note{font-size:11.5px; color:var(--text-faint); line-height:1.6; margin-top:6px;}
+.book-table{width:100%; border-collapse:collapse; margin-bottom:12px; font-size:13px; font-family:var(--condensed);}
+.book-table th{text-align:left; color:var(--text-faint); font-weight:700; padding:6px; border-bottom:1px solid var(--line); font-size:11px; text-transform:uppercase; letter-spacing:.05em; font-family:var(--condensed);}
+.book-table td{padding:5px 6px; border-bottom:1px solid var(--line);}
+.book-table input, .book-table select{width:100%; background:rgba(255,255,255,.03); border:1px solid var(--line); color:var(--text); padding:6px 7px; border-radius:6px; font-size:13px; font-family:var(--condensed);}
+.book-table .rm{background:none; border:none; color:var(--text-faint); cursor:pointer;}
+.book-table .rm:hover{color:var(--red);}
+.res-table{width:100%; border-collapse:collapse; font-size:13px; font-family:var(--condensed);}
+.res-table th{text-align:left; color:var(--text-faint); font-weight:700; padding:6px; border-bottom:1px solid var(--line); font-size:11px; text-transform:uppercase; letter-spacing:.05em; font-family:var(--condensed);}
+.res-table td{padding:7px 6px; border-bottom:1px solid var(--line);}
+#corr-matrix{display:grid; gap:4px;}
+#corr-matrix .corr-row{display:grid; gap:4px; align-items:center;}
+#corr-matrix input{background:rgba(255,255,255,.03); border:1px solid var(--line); color:var(--text); font-size:11px; padding:6px 2px; text-align:center; border-radius:6px; width:100%;}
+#corr-matrix .corr-label{font-size:10px; color:var(--text-faint); text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.contrib-bar{height:6px; border-radius:3px; background:linear-gradient(90deg,var(--copper),var(--wine));}
+
+/* ---------- home / hero page ---------- */
+.hero{padding:70px 0 40px; position:relative;}
+.hero .eyebrow{font-family:var(--nav); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--copper); margin-bottom:18px;}
+.hero h1{font-family:var(--condensed); font-weight:800; font-size:clamp(36px,5.8vw,68px); line-height:1.03; letter-spacing:-.01em; max-width:820px; margin-bottom:20px;}
+.hero h1 em{font-family:var(--italic); font-style:italic; color:var(--violet); font-weight:500;}
+.hero p{font-family:var(--italic); font-style:italic; font-size:18px; color:var(--text-dim); max-width:560px; margin-bottom:32px; line-height:1.6;}
+.hero-actions{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:60px;}
+.btn-ghost{background:var(--panel); border:1px solid var(--line); color:var(--text); padding:12px 22px; border-radius:10px;
+  cursor:pointer; font-family:var(--nav); font-size:12px; letter-spacing:.05em; text-transform:uppercase; backdrop-filter:blur(16px); transition:.2s;}
+.btn-ghost:hover{border-color:var(--copper); color:var(--copper);}
+.feature-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px;}
+.feature-card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px; cursor:pointer;
+  backdrop-filter:blur(22px) saturate(130%); box-shadow:0 10px 40px rgba(0,0,0,.3); transition:transform .3s,border-color .3s,box-shadow .3s;}
+.feature-card:hover{transform:translateY(-4px); border-color:var(--copper-dim); box-shadow:0 16px 50px rgba(255,138,92,.15);}
+.feature-card .num{font-family:var(--serif); font-size:12px; color:var(--copper); letter-spacing:.05em; margin-bottom:12px;}
+.feature-card h3{font-family:var(--condensed); font-weight:700; font-size:21px; letter-spacing:.01em; margin-bottom:8px;}
+.feature-card p{font-size:13px; color:var(--text-dim); line-height:1.55;}
+.divider-wave{height:80px; margin:10px 0 40px; opacity:.5;}
+.footer-credit{text-align:center; margin-top:64px; padding-top:26px; border-top:1px solid var(--line);
+  font-family:var(--nav); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-faint);}
+.footer-credit span{color:var(--text-dim); font-weight:600;}
+
+/* ---------- glossary ---------- */
+.glossary-entry{margin-bottom:26px; padding-bottom:22px; border-bottom:1px solid var(--line);}
+.glossary-entry:last-child{border-bottom:none; margin-bottom:0; padding-bottom:0;}
+.glossary-entry h3{font-family:var(--condensed); font-weight:700; font-size:16px; letter-spacing:.02em; color:var(--copper); margin-bottom:6px; text-transform:uppercase;}
+.glossary-entry p{font-size:13px; color:var(--text-dim); line-height:1.65; margin-bottom:10px;}
+.glossary-formula{background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:10px; padding:14px 16px; overflow-x:auto; margin-bottom:8px;}
+.glossary-formula .katex{color:var(--text); font-size:1.05em;}
+.glossary-formula .katex-display{margin:6px 0;}
+</style>
+</head>
+<body>
+
+<div id="bg-layer">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="grid"></div>
+  <div class="grain"></div>
+</div>
+
+<header>
+  <div class="brand" onclick="goTo('home')" title="Go to home"><span class="mark">&kappa;</span><h1>KAPPA <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">- Monte Carlo Risk Simulation</span></h1></div>
+  <div class="tick">GBM · OPTIONS · VAR / ES · STRESS TESTING</div>
+</header>
+
+<nav>
+  <button class="tab-btn" data-view="gbm">01&nbsp; Simulation Engine</button>
+  <button class="tab-btn" data-view="options">02&nbsp; Derivatives Pricing</button>
+  <button class="tab-btn" data-view="portfolio">03&nbsp; Portfolio Risk</button>
+  <button class="tab-btn" data-view="stress">04&nbsp; Stress Testing</button>
+  <button class="tab-btn" data-view="glossary">05&nbsp; Glossary</button>
+</nav>
+
+<main>
+
+  <!-- HOME -->
+  <section class="view active" id="view-home">
+    <div class="hero">
+      <div class="eyebrow">Quantitative Risk, Rendered Live</div>
+      <h1>Thousands of futures,<br><em>one</em> coherent picture.</h1>
+      <p>A Monte Carlo engine for pricing derivatives, sizing portfolio risk, and pressure-testing the book, every path simulated in your browser, in real time.</p>
+      <div class="hero-actions">
+        <button class="btn-run" style="width:auto;padding:13px 26px;" onclick="goTo('gbm')">Run a Simulation</button>
+        <button class="btn-ghost" onclick="goTo('portfolio')">Explore Portfolio Risk</button>
+      </div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card" onclick="goTo('gbm')"><div class="num">01</div><h3>Simulation Engine</h3><p>Geometric Brownian Motion path simulation with configurable drift, volatility, and horizon, visualised as a live fan of terminal outcomes.</p></div>
+      <div class="feature-card" onclick="goTo('options')"><div class="num">02</div><h3>Derivatives Pricing</h3><p>Monte Carlo option pricing benchmarked against closed-form Black-Scholes, with convergence diagnostics across sample sizes.</p></div>
+      <div class="feature-card" onclick="goTo('portfolio')"><div class="num">03</div><h3>Portfolio Risk</h3><p>Multi-asset correlated simulation producing VaR, Expected Shortfall, and per-asset risk contribution at any confidence level.</p></div>
+      <div class="feature-card" onclick="goTo('stress')"><div class="num">04</div><h3>Stress Testing</h3><p>Shock price, volatility, drift, and correlation simultaneously to compare baseline against a stressed regime.</p></div>
+    </div>
+    <div class="footer-credit">Created by <span>Aryah Abraham Marrate &amp; Ashritha Anandal</span></div>
+  </section>
+
+  <!-- GBM -->
+  <section class="view" id="view-gbm">
+    <div class="grid">
+      <div class="panel">
+        <h2>Market Parameters</h2>
+        <div class="field"><label>Initial Price (S0)</label><input type="number" id="gbm-s0" value="100" step="any"></div>
+        <div class="row2">
+          <div class="field"><label>Drift μ (annual)</label><input type="number" id="gbm-mu" value="0.08" step="any"></div>
+          <div class="field"><label>Volatility σ (annual)</label><input type="number" id="gbm-sigma" value="0.25" step="any"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Time Horizon T (yrs)</label><input type="number" id="gbm-T" value="1" step="any"></div>
+          <div class="field"><label>Time Steps</label><input type="number" id="gbm-steps" value="252"></div>
+        </div>
+        <div class="field"><label>Simulated Paths</label><input type="number" id="gbm-sims" value="5000"></div>
+        <div class="field"><label>Seed (optional)</label><input type="number" id="gbm-seed" placeholder="random"></div>
+        <button class="btn-run" onclick="runGBM()">Run Simulation</button>
+      </div>
+      <div class="results" id="gbm-results">
+        <div class="placeholder">Configure parameters and run the simulation to see price paths and the terminal distribution.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPTIONS -->
+  <section class="view" id="view-options">
+    <div class="grid">
+      <div class="panel">
+        <h2>Option Parameters</h2>
+        <div class="row2">
+          <div class="field"><label>Spot (S0)</label><input type="number" id="opt-spot" value="100" step="any"></div>
+          <div class="field"><label>Strike (K)</label><input type="number" id="opt-strike" value="105" step="any"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Risk-Free Rate (r)</label><input type="number" id="opt-r" value="0.04" step="any"></div>
+          <div class="field"><label>Volatility (σ)</label><input type="number" id="opt-sigma" value="0.25" step="any"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Maturity T (yrs)</label><input type="number" id="opt-T" value="1" step="any"></div>
+          <div class="field"><label>Type</label>
+            <select id="opt-type"><option value="CALL">Call</option><option value="PUT">Put</option></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Simulations</label><input type="number" id="opt-sims" value="100000"></div>
+          <div class="field"><label>Seed (optional)</label><input type="number" id="opt-seed" placeholder="random"></div>
+        </div>
+        <button class="btn-run" onclick="runOption()">Price Option</button>
+        <p class="note">Runs a Monte Carlo price alongside closed-form Black-Scholes, then a convergence sweep across sample sizes. Set a seed to reproduce results exactly.</p>
+      </div>
+      <div class="results" id="opt-results">
+        <div class="placeholder">Configure the option and run to compare Monte Carlo vs. Black-Scholes pricing.</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
+      <h2>Price Existing Derivatives (Book)</h2>
+      <p class="note" style="margin-bottom:12px;">Add each derivative already held in the book, then price all of them together.</p>
+      <table class="book-table" id="book-table">
+        <thead><tr><th>Label</th><th>Type</th><th>Spot</th><th>Strike</th><th>Rate</th><th>Vol</th><th>Maturity</th><th></th></tr></thead>
+        <tbody id="book-body"></tbody>
+      </table>
+      <button class="btn-add" onclick="addBookRow()">+ Add Derivative</button>
+      <button class="btn-run" onclick="runBook()">Price Book</button>
+      <div id="book-results" style="margin-top:16px;"></div>
+    </div>
+  </section>
+
+  <!-- PORTFOLIO -->
+  <section class="view" id="view-portfolio">
+    <div class="grid">
+      <div class="panel">
+        <h2>Portfolio Construction</h2>
+        <div id="asset-list"></div>
+        <button class="btn-add" onclick="addAsset()">+ Add Asset</button>
+        <div class="field"><label>Correlation Matrix</label><div id="corr-matrix"></div></div>
+        <div class="field"><label>Portfolio Value ($)</label><input type="number" id="pf-value" value="1000000" step="any"></div>
+        <div class="row2">
+          <div class="field"><label>Time Horizon (yrs)</label><input type="number" id="pf-T" value="0.25" step="any"></div>
+          <div class="field"><label>Primary Confidence</label>
+            <select id="pf-conf"><option value="0.90">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Simulations</label><input type="number" id="pf-sims" value="50000"></div>
+          <div class="field"><label>Seed (optional)</label><input type="number" id="pf-seed" placeholder="random"></div>
+        </div>
+        <button class="btn-run" onclick="runPortfolio()">Simulate Portfolio</button>
+      </div>
+      <div class="results" id="pf-results">
+        <div class="placeholder">Add two or more assets to see the P&amp;L distribution, VaR/ES at multiple confidence levels, and per-asset risk contribution.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STRESS -->
+  <section class="view" id="view-stress">
+    <div class="grid">
+      <div class="panel">
+        <h2>Scenario</h2>
+        <p class="note" style="margin-bottom:14px;">Uses the same portfolio configured in the Portfolio Risk tab. Leave a shock blank to skip it.</p>
+        <div class="field"><label>Scenario Name</label><input type="text" id="sx-name" value="Market Crash"></div>
+        <div class="field"><label>Price Shock (%, e.g. -20)</label><input type="number" id="sx-price" value="-20" step="any"></div>
+        <div class="field"><label>Volatility Multiplier (e.g. 1.5)</label><input type="number" id="sx-vol" value="1.5" step="any"></div>
+        <div class="field"><label>Drift Shift (abs, e.g. -0.02)</label><input type="number" id="sx-drift" value="" step="any"></div>
+        <div class="field"><label>Correlation Shift (e.g. 0.2)</label><input type="number" id="sx-corr" value="0.2" step="any"></div>
+        <button class="btn-run" onclick="runStress()">Run Stress Test</button>
+      </div>
+      <div class="results" id="sx-results">
+        <div class="placeholder">Configure a scenario and run to compare baseline vs. stressed risk.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section class="view" id="view-glossary">
+    <div class="panel">
+      <h2>Glossary &amp; Formulas</h2>
+
+      <div class="glossary-entry">
+        <h3>Geometric Brownian Motion (GBM)</h3>
+        <p>The stochastic differential equation driving every simulated price path, and its exact discretization used on the grid (no Euler bias, only Monte Carlo sampling error). Drift μ pulls the price up or down on average over time, while volatility σ scales the size of the random shocks W_t, so higher σ produces wider, noisier paths around that drift.</p>
+        <div class="glossary-formula">$$dS_t = \mu S_t\,dt + \sigma S_t\,dW_t$$</div>
+        <div class="glossary-formula">$$S_{t+\Delta t} = S_t \exp\!\left[\left(\mu - \tfrac{1}{2}\sigma^2\right)\Delta t + \sigma\sqrt{\Delta t}\,Z\right],\quad Z \sim \mathcal{N}(0,1)$$</div>
+      </div>
+
+      <div class="glossary-entry">
+        <h3>Black-Scholes Closed Form</h3>
+        <p>The analytical benchmark the Monte Carlo option price is checked against, under the same risk-neutral assumptions. d1 and d2 measure how far the current price sits from the strike in volatility-adjusted, risk-neutral terms; N(·) is the standard normal cumulative distribution, so N(d2) is roughly the probability the option finishes in the money.</p>
+        <div class="glossary-formula">$$d_1 = \frac{\ln(S_0/K) + \left(r + \tfrac{1}{2}\sigma^2\right)T}{\sigma\sqrt{T}}, \qquad d_2 = d_1 - \sigma\sqrt{T}$$</div>
+        <div class="glossary-formula">$$C = S_0 N(d_1) - K e^{-rT} N(d_2) \qquad\qquad P = K e^{-rT} N(-d_2) - S_0 N(-d_1)$$</div>
+      </div>
+
+      <div class="glossary-entry">
+        <h3>Monte Carlo Option Price</h3>
+        <p>The discounted average payoff across simulated terminal prices, with a standard error that shrinks as more paths are added, this is the convergence shown against Black-Scholes. Because SE shrinks with 1/√M, cutting the error in half requires roughly 4x as many simulated paths, which is why the convergence chart flattens out slowly at high path counts.</p>
+        <div class="glossary-formula">$$\hat{C} = e^{-rT} \cdot \frac{1}{M}\sum_{i=1}^{M} \max\!\left(S_T^{(i)} - K,\ 0\right), \qquad \text{SE} = \frac{\sigma_{\text{payoff}}}{\sqrt{M}}$$</div>
+      </div>
+
+      <div class="glossary-entry">
+        <h3>Value at Risk (VaR) &amp; Expected Shortfall (ES)</h3>
+        <p>VaR is the loss threshold not expected to be exceeded at a given confidence level, ES is the average loss in the tail beyond that threshold. Both are reported as positive numbers representing a loss.</p>
+        <div class="glossary-formula">$$\text{VaR}_\alpha = -\,\text{Quantile}_{1-\alpha}(\text{P\&L}) \qquad \text{ES}_\alpha = -\,\mathbb{E}\left[\text{P\&L} \mid \text{P\&L} \le -\text{VaR}_\alpha\right]$$</div>
+        <p>The parametric method assumes Normally distributed P&amp;L as an independent analytical check, divergence from the historical (simulated) figures reflects skew and fat tails the Monte Carlo engine captures.</p>
+        <div class="glossary-formula">$$\text{VaR}_\alpha^{\text{param}} = -\left(\mu_{\text{P\&L}} + z_{1-\alpha}\,\sigma_{\text{P\&L}}\right)$$</div>
+      </div>
+
+      <div class="glossary-entry">
+        <h3>Risk Contribution (Euler Allocation)</h3>
+        <p>Splits total portfolio VaR across assets by each asset's covariance with the portfolio's P&amp;L, contributions sum exactly to the total VaR. β_i captures how much each asset co-moves with total portfolio losses, an asset can carry outsized risk contribution relative to its size if it's highly correlated with the rest of the book.</p>
+        <div class="glossary-formula">$$\text{VaR}_i = \beta_i \cdot \text{VaR}_{\text{total}}, \qquad \beta_i = \frac{\text{Cov}(\text{P\&L}_i,\ \text{P\&L}_p)}{\text{Var}(\text{P\&L}_p)}$$</div>
+      </div>
+
+      <div class="glossary-entry">
+        <h3>Stress Testing Shocks</h3>
+        <p>Each scenario perturbs the baseline portfolio parameters before re-running the same simulation and risk pipeline. Price shocks move S0 directly, volatility and drift shocks scale or shift σ and μ, and correlation shocks nudge ρ while keeping it clipped to a valid [-1,1] range, letting you see how VaR and expected value react to each stress independently.</p>
+        <div class="glossary-formula">$$S_0' = S_0 (1 + \text{shock}) \qquad \sigma' = \sigma \cdot m \qquad \mu' = \mu + \Delta\mu \qquad \rho' = \text{clip}(\rho + \Delta\rho,\ -1,\ 1)$$</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// parallax on background blobs
+document.addEventListener('mousemove', e=>{
+  const x=(e.clientX/window.innerWidth-0.5), y=(e.clientY/window.innerHeight-0.5);
+  document.querySelectorAll('#bg-layer .blob').forEach((b,i)=>{
+    const f=(i+1)*42; // higher sensitivity: blobs track the cursor more aggressively
+    b.style.marginLeft = (x*f)+'px'; b.style.marginTop = (y*f)+'px';
+  });
+});
+
+const API = "";
+const PLOT_TEMPLATE = {
+  paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+  font:{color:'#a89f95', family:'Georgia, serif', size:12},
+  margin:{t:10,r:20,l:50,b:40},
+  xaxis:{gridcolor:'rgba(255,255,255,.08)', zerolinecolor:'rgba(255,255,255,.12)'},
+  yaxis:{gridcolor:'rgba(255,255,255,.08)', zerolinecolor:'rgba(255,255,255,.12)'},
+  legend:{font:{size:10}}
+};
+const PLOT_CFG = {displayModeBar:false, responsive:true};
+
+let glossaryRendered = false;
+function goTo(view){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+view));
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(view==='glossary' && !glossaryRendered && window.renderMathInElement){
+    renderMathInElement(document.getElementById('view-glossary'), {
+      delimiters:[{left:'$$', right:'$$', display:true}, {left:'\\(', right:'\\)', display:false}],
+      throwOnError:false
+    });
+    glossaryRendered = true;
+  }
+}
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>goTo(btn.dataset.view));
+});
+
+function fmt(n, dec=2){ return Number(n).toLocaleString(undefined,{minimumFractionDigits:dec, maximumFractionDigits:dec}); }
+function fmtMoney(n){ return (n<0?'-$':'$') + Math.abs(n).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function fmtPrice(n){ return (n<0?'-$':'$') + Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:6, maximumFractionDigits:6}); }
+
+async function post(path, body){
+  const res = await fetch(API+path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  if(!res.ok){ const err = await res.json().catch(()=>({detail:res.statusText})); throw new Error(err.detail || 'Request failed'); }
+  return res.json();
+}
+function errorBox(msg){ return `<div class="error-box">ERROR &nbsp;${msg}</div>`; }
+
+// ---------- GBM ----------
+async function runGBM(){
+  const el = document.getElementById('gbm-results');
+  el.innerHTML = '<div class="placeholder">Running simulation…</div>';
+  try{
+    const body = {
+      initial_price: +document.getElementById('gbm-s0').value,
+      drift: +document.getElementById('gbm-mu').value,
+      volatility: +document.getElementById('gbm-sigma').value,
+      time_horizon: +document.getElementById('gbm-T').value,
+      steps: +document.getElementById('gbm-steps').value,
+      simulations: +document.getElementById('gbm-sims').value,
+      seed: document.getElementById('gbm-seed').value ? +document.getElementById('gbm-seed').value : null
+    };
+    const d = await post('/api/gbm/simulate', body);
+    el.innerHTML = `
+      <div class="stat-strip">
+        <div class="stat" data-tip="Average simulated price across all paths at the final time step T."><div class="label">Mean Terminal Price</div><div class="value">${fmt(d.terminal_stats.mean)}</div></div>
+        <div class="stat" data-tip="Dispersion of terminal prices around the mean, driven by volatility (σ) and horizon (T)."><div class="label">Std Dev</div><div class="value">${fmt(d.terminal_stats.std)}</div></div>
+        <div class="stat" data-tip="Lowest simulated terminal price across all paths in this run."><div class="label">Min</div><div class="value">${fmt(d.terminal_stats.min)}</div></div>
+        <div class="stat" data-tip="Highest simulated terminal price across all paths in this run."><div class="label">Max</div><div class="value">${fmt(d.terminal_stats.max)}</div></div>
+      </div>
+      <div class="chart-box"><h3>Simulated Price Paths</h3><div id="gbm-paths" style="height:340px;"></div></div>
+      <div class="chart-box"><h3>Terminal Price Distribution</h3><div id="gbm-hist" style="height:280px;"></div></div>`;
+
+    const traces = d.sample_paths.map((p,i)=>({x:d.time_grid, y:p, type:'scatter', mode:'lines',
+      line:{width:1, color:'rgba(255,138,92,0.16)'}, hoverinfo:'skip', showlegend:false}));
+    Plotly.newPlot('gbm-paths', traces, {...PLOT_TEMPLATE, xaxis:{...PLOT_TEMPLATE.xaxis,title:'Time (years)'}, yaxis:{...PLOT_TEMPLATE.yaxis,title:'Price'}}, PLOT_CFG);
+
+    const centers = d.terminal_prices_histogram.bin_edges.slice(0,-1).map((e,i)=>(e+d.terminal_prices_histogram.bin_edges[i+1])/2);
+    Plotly.newPlot('gbm-hist', [{x:centers, y:d.terminal_prices_histogram.counts, type:'bar', marker:{color:'#b9a3ec'}}],
+      {...PLOT_TEMPLATE, xaxis:{...PLOT_TEMPLATE.xaxis,title:'Terminal Price S_T'}, yaxis:{...PLOT_TEMPLATE.yaxis,title:'Frequency'}}, PLOT_CFG);
+  }catch(e){ el.innerHTML = errorBox(e.message); }
+}
+
+// ---------- OPTIONS ----------
+async function runOption(){
+  const el = document.getElementById('opt-results');
+  el.innerHTML = '<div class="placeholder">Pricing…</div>';
+  try{
+    const base = {
+      spot:+document.getElementById('opt-spot').value, strike:+document.getElementById('opt-strike').value,
+      risk_free_rate:+document.getElementById('opt-r').value, volatility:+document.getElementById('opt-sigma').value,
+      maturity:+document.getElementById('opt-T').value, option_type:document.getElementById('opt-type').value,
+      seed: document.getElementById('opt-seed').value ? +document.getElementById('opt-seed').value : null,
+    };
+    const [price, conv] = await Promise.all([
+      post('/api/options/price', {...base, simulations:+document.getElementById('opt-sims').value}),
+      post('/api/options/convergence', {...base, simulations:1000})
+    ]);
+    const errPct = price.pricing_error_pct!=null ? (price.pricing_error_pct*100).toFixed(4)+'%' : 'n/a';
+    el.innerHTML = `
+      <div class="stat-strip">
+        <div class="stat" data-tip="Discounted average simulated payoff across all Monte Carlo paths."><div class="label">Monte Carlo Price</div><div class="value">${fmtPrice(price.monte_carlo_price)}</div></div>
+        <div class="stat" data-tip="Exact closed-form price under the same risk-neutral GBM assumptions, the ground-truth benchmark."><div class="label">Black-Scholes Price</div><div class="value">${fmtPrice(price.black_scholes_price)}</div></div>
+        <div class="stat" data-tip="Percentage difference between the Monte Carlo and Black-Scholes prices."><div class="label">Pricing Error</div><div class="value">${errPct}</div></div>
+        <div class="stat" data-tip="Monte Carlo sampling error: payoff std. deviation divided by √(simulations). Shrinks as simulations increase."><div class="label">Std Error</div><div class="value">${fmt(price.standard_error,6)}</div></div>
+      </div>
+      <div class="chart-box"><h3>Convergence: MC Price vs. Black-Scholes</h3><div id="opt-conv" style="height:300px;"></div></div>
+      <div class="chart-box"><h3>Payoff Distribution</h3><div id="opt-hist" style="height:260px;"></div></div>`;
+
+    const n = conv.points.map(p=>p.n_simulations), mc = conv.points.map(p=>p.price);
+    const lo = conv.points.map(p=>p.ci_lower), hi = conv.points.map(p=>p.ci_upper);
+    Plotly.newPlot('opt-conv', [
+      {x:n, y:hi, type:'scatter', mode:'lines', line:{width:0}, showlegend:false, hoverinfo:'skip'},
+      {x:n, y:lo, type:'scatter', mode:'lines', line:{width:0}, fill:'tonexty', fillcolor:'rgba(255,138,92,0.12)', name:'95% CI'},
+      {x:n, y:mc, type:'scatter', mode:'lines+markers', line:{color:'#ff8a5c'}, marker:{size:5}, name:'MC Price'},
+      {x:n, y:n.map(()=>conv.black_scholes_price), type:'scatter', mode:'lines', line:{color:'#b9a3ec',dash:'dash'}, name:'Black-Scholes'}
+    ], {...PLOT_TEMPLATE, xaxis:{...PLOT_TEMPLATE.xaxis,title:'Simulations',type:'log'}, yaxis:{...PLOT_TEMPLATE.yaxis,title:'Price'}}, PLOT_CFG);
+
+    const centers = price.payoff_histogram.bin_edges.slice(0,-1).map((e,i)=>(e+price.payoff_histogram.bin_edges[i+1])/2);
+    Plotly.newPlot('opt-hist', [{x:centers, y:price.payoff_histogram.counts, type:'bar', marker:{color:'#ff8a5c'}}],
+      {...PLOT_TEMPLATE, xaxis:{...PLOT_TEMPLATE.xaxis,title:'Payoff at Expiry'}, yaxis:{...PLOT_TEMPLATE.yaxis,title:'Frequency'}}, PLOT_CFG);
+  }catch(e){ el.innerHTML = errorBox(e.message); }
+}
+
+// ---------- BOOK OF DERIVATIVES ----------
+let bookCount = 0;
+function addBookRow(label, type, spot, strike, rate, vol, mat){
+  bookCount++;
+  const id = bookCount;
+  const tr = document.createElement('tr');
+  tr.id = 'book-'+id;
+  tr.innerHTML = `
+    <td><input class="b-label" value="${label||'Deriv '+id}"></td>
+    <td><select class="b-type"><option value="CALL" ${type==='PUT'?'':'selected'}>Call</option><option value="PUT" ${type==='PUT'?'selected':''}>Put</option></select></td>
+    <td><input class="b-spot" type="number" value="${spot??100}" step="any"></td>
+    <td><input class="b-strike" type="number" value="${strike??100}" step="any"></td>
+    <td><input class="b-rate" type="number" value="${rate??0.04}" step="any"></td>
+    <td><input class="b-vol" type="number" value="${vol??0.25}" step="any"></td>
+    <td><input class="b-mat" type="number" value="${mat??1}" step="any"></td>
+    <td><button class="rm" onclick="document.getElementById('book-${id}').remove()">&times;</button></td>`;
+  document.getElementById('book-body').appendChild(tr);
+}
+addBookRow('Existing Call',  'CALL', 100, 105, 0.04, 0.25, 1);
+addBookRow('Existing Put',   'PUT',  100, 95,  0.04, 0.22, 0.5);
+
+async function runBook(){
+  const el = document.getElementById('book-results');
+  el.innerHTML = '<div class="placeholder">Pricing book…</div>';
+  try{
+    const rows = [...document.querySelectorAll('#book-body tr')];
+    if(rows.length===0) throw new Error('Add at least one derivative');
+    const instruments = rows.map(r=>({
+      label: r.querySelector('.b-label').value,
+      option_type: r.querySelector('.b-type').value,
+      spot: +r.querySelector('.b-spot').value,
+      strike: +r.querySelector('.b-strike').value,
+      risk_free_rate: +r.querySelector('.b-rate').value,
+      volatility: +r.querySelector('.b-vol').value,
+      maturity: +r.querySelector('.b-mat').value,
+      simulations: 100000,
+    }));
+    const d = await post('/api/options/price-batch', {instruments});
+    const rowsHtml = d.instruments.map(r=>`
+      <tr><td>${r.label}</td><td>${fmtPrice(r.monte_carlo_price)}</td><td>${fmtPrice(r.black_scholes_price)}</td>
+      <td>${(r.pricing_error_pct*100).toFixed(4)}%</td></tr>`).join('');
+    el.innerHTML = `
+      <table class="res-table">
+        <thead><tr><th>Instrument</th><th>MC Price</th><th>BS Price</th><th>Error</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+        <tfoot><tr style="font-weight:600;"><td>TOTAL BOOK VALUE</td><td>${fmtPrice(d.total_monte_carlo_value)}</td><td>${fmtPrice(d.total_black_scholes_value)}</td><td></td></tr></tfoot>
+      </table>`;
+  }catch(e){ el.innerHTML = errorBox(e.message); }
+}
+
+// ---------- PORTFOLIO ----------
+let assetCount = 0;
+function addAsset(name, s0, mu, sigma, w){
+  assetCount++;
+  const id = assetCount;
+  const div = document.createElement('div');
+  div.className = 'asset-row';
+  div.id = 'asset-'+id;
+  div.innerHTML = `
+    <button class="rm" onclick="document.getElementById('asset-${id}').remove(); renderCorrMatrix();">&times;</button>
+    <div class="field"><label>Name</label><input class="a-name" value="${name||'Asset '+id}" onchange="renderCorrMatrix()"></div>
+    <div class="row2">
+      <div class="field"><label>Price</label><input class="a-s0" type="number" value="${s0??100}" step="any"></div>
+      <div class="field"><label>Weight</label><input class="a-w" type="number" value="${w??(1/3).toFixed(2)}" step="any"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Drift</label><input class="a-mu" type="number" value="${mu??0.08}" step="any"></div>
+      <div class="field"><label>Volatility</label><input class="a-sigma" type="number" value="${sigma??0.25}" step="any"></div>
+    </div>`;
+  document.getElementById('asset-list').appendChild(div);
+  renderCorrMatrix();
+}
+
+// Preserves any correlation values the user has already edited when assets are added/removed.
+let corrState = {};
+function renderCorrMatrix(){
+  const names = [...document.querySelectorAll('.asset-row .a-name')].map(i=>i.value);
+  const n = names.length;
+  const box = document.getElementById('corr-matrix');
+  if(n < 2){ box.innerHTML = '<div class="note">Add 2+ assets to set correlations.</div>'; return; }
+  const cols = `60px repeat(${n},1fr)`;
+  let html = `<div class="corr-row" style="grid-template-columns:${cols};"><div></div>` +
+    names.map(nm=>`<div class="corr-label">${nm}</div>`).join('') + `</div>`;
+  for(let i=0;i<n;i++){
+    html += `<div class="corr-row" style="grid-template-columns:${cols};"><div class="corr-label">${names[i]}</div>`;
+    for(let j=0;j<n;j++){
+      if(i===j){ html += `<input value="1.00" disabled>`; }
+      else{
+        const key = [names[i],names[j]].sort().join('|');
+        const val = corrState[key] ?? 0.20;
+        html += `<input class="corr-cell" data-i="${i}" data-j="${j}" data-key="${key}" type="number" step="0.05" min="-1" max="1" value="${val}" onchange="syncCorr(this)">`;
+      }
+    }
+    html += `</div>`;
+  }
+  box.innerHTML = html;
+}
+function syncCorr(input){
+  corrState[input.dataset.key] = +input.value;
+  document.querySelectorAll(`.corr-cell[data-key="${input.dataset.key}"]`).forEach(el=>el.value = input.value);
+}
+addAsset('Tech Equity',100,0.10,0.30,0.4);
+addAsset('Bond ETF',100,0.03,0.06,0.35);
+addAsset('Commodity',100,0.05,0.22,0.25);
+
+function collectPortfolioBody(){
+  const rows = [...document.querySelectorAll('.asset-row')];
+  if(rows.length < 1) throw new Error('Add at least one asset');
+  const assets = rows.map(r=>({
+    name: r.querySelector('.a-name').value,
+    initial_price: +r.querySelector('.a-s0').value,
+    drift: +r.querySelector('.a-mu').value,
+    volatility: +r.querySelector('.a-sigma').value,
+    weight: +r.querySelector('.a-w').value,
+  }));
+  const n = assets.length;
+  const names = assets.map(a=>a.name);
+  const corr = Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>{
+    if(i===j) return 1.0;
+    const key = [names[i],names[j]].sort().join('|');
+    return corrState[key] ?? 0.2;
+  }));
+  return {
+    assets, correlation_matrix: corr,
+    portfolio_value: +document.getElementById('pf-value').value,
+    time_horizon: +document.getElementById('pf-T').value,
+    simulations: +document.getElementById('pf-sims').value,
+    confidence_level: +document.getElementById('pf-conf').value,
+    confidence_levels: [0.90, 0.95, 0.99],
+    seed: document.getElementById('pf-seed').value ? +document.getElementById('pf-seed').value : null,
+  };
+}
+
+async function runPortfolio(){
+  const el = document.getElementById('pf-results');
+  el.innerHTML = '<div class="placeholder">Simulating…</div>';
+  try{
+    const body = collectPortfolioBody();
+    const d = await post('/api/portfolio/simulate', body);
+    const levelRows = Object.entries(d.risk_by_level).map(([lvl,r])=>`
+      <tr><td>${Math.round(lvl*100)}%</td><td class="mono">${fmtMoney(r.historical.var)}</td><td class="mono">${fmtMoney(r.historical.expected_shortfall)}</td>
+      <td class="mono">${fmtMoney(r.parametric.var)}</td><td class="mono">${fmtMoney(r.parametric.expected_shortfall)}</td></tr>`).join('');
+    const maxContrib = Math.max(...d.risk_contributions.map(c=>Math.abs(c.var_contribution)));
+    const contribRows = d.risk_contributions.map(c=>`
+      <tr><td>${c.asset}</td><td class="mono">${fmtMoney(c.var_contribution)}</td>
+      <td>${(c.var_contribution_pct*100).toFixed(1)}%<div class="contrib-bar" style="width:${Math.max(4,Math.abs(c.var_contribution)/maxContrib*100)}%; margin-top:3px;"></div></td></tr>`).join('');
+    el.innerHTML = `
+      <div class="stat-strip">
+        <div class="stat" data-tip="Total portfolio value at the start of the simulation, before any P&L is applied."><div class="label">Initial Value</div><div class="value">${fmtMoney(d.initial_value)}</div></div>
+        <div class="stat" data-tip="Average simulated portfolio value at the end of the time horizon, across all paths."><div class="label">Expected Value</div><div class="value">${fmtMoney(d.expected_terminal_value)}</div></div>
+        <div class="stat" data-tip="Standard deviation of simulated terminal portfolio value, driven by asset volatilities and correlations."><div class="label">Portfolio Volatility</div><div class="value">${fmtMoney(d.portfolio_volatility)}</div></div>
+        <div class="stat" data-tip="Loss not expected to be exceeded at this confidence level, read directly off the simulated P&L distribution."><div class="label">${Math.round(d.confidence_level*100)}% VaR</div><div class="value neg">${fmtMoney(d.risk.historical.var)}</div></div>
+      </div>
+      <div class="chart-box"><h3>Portfolio P&amp;L Distribution (${Math.round(d.confidence_level*100)}% VaR / ES marked)</h3><div id="pf-hist" style="height:320px;"></div></div>
+      <div class="chart-box">
+        <h3>VaR / ES by Confidence Level - Historical vs. Parametric</h3>
+        <table class="res-table" style="margin:12px;">
+          <thead><tr><th>Level</th><th>Hist. VaR</th><th>Hist. ES</th><th>Param. VaR</th><th>Param. ES</th></tr></thead>
+          <tbody>${levelRows}</tbody>
+        </table>
+        <p class="note" style="margin:0 12px 12px;">Parametric assumes Normal P&amp;L; divergence from historical reflects the skew/fat tails Monte Carlo captures.</p>
+      </div>
+      <div class="chart-box">
+        <h3>Risk Contribution by Asset (Euler allocation, sums to total VaR)</h3>
+        <table class="res-table" style="margin:12px;">
+          <thead><tr><th>Asset</th><th>VaR Contribution</th><th>Share of Risk</th></tr></thead>
+          <tbody>${contribRows}</tbody>
+        </table>
+      </div>`;
+    const centers = d.pnl_histogram.bin_edges.slice(0,-1).map((e,i)=>(e+d.pnl_histogram.bin_edges[i+1])/2);
+    Plotly.newPlot('pf-hist', [
+      {x:centers, y:d.pnl_histogram.counts, type:'bar', marker:{color: centers.map(c=> c <= -d.risk.historical.var ? '#ef6d6d' : '#8fd4c1')}},
+    ], {...PLOT_TEMPLATE,
+      shapes:[{type:'line', x0:-d.risk.historical.var, x1:-d.risk.historical.var, y0:0, y1:1, yref:'paper', line:{color:'#ff8a5c', dash:'dash'}}],
+      xaxis:{...PLOT_TEMPLATE.xaxis,title:'P&L ($)'}, yaxis:{...PLOT_TEMPLATE.yaxis,title:'Frequency'}}, PLOT_CFG);
+  }catch(e){ el.innerHTML = errorBox(e.message); }
+}
+
+// ---------- STRESS ----------
+async function runStress(){
+  const el = document.getElementById('sx-results');
+  el.innerHTML = '<div class="placeholder">Running scenario…</div>';
+  try{
+    const base = collectPortfolioBody();
+    const pv = v => v===''||v===null||isNaN(v) ? null : +v;
+    const body = {
+      ...base,
+      scenario_name: document.getElementById('sx-name').value,
+      price_shock_pct: pv(document.getElementById('sx-price').value)!=null ? pv(document.getElementById('sx-price').value)/100 : null,
+      volatility_multiplier: pv(document.getElementById('sx-vol').value),
+      drift_shift: pv(document.getElementById('sx-drift').value),
+      correlation_shift: pv(document.getElementById('sx-corr').value),
+    };
+    const d = await post('/api/portfolio/stress-test', body);
+    const changeClass = d.value_change < 0 ? 'neg' : 'pos';
+    el.innerHTML = `
+      <div class="stat-strip">
+        <div class="stat" data-tip="Expected portfolio value under the unshocked, baseline market parameters."><div class="label">Baseline Expected Value</div><div class="value">${fmtMoney(d.baseline.expected_value)}</div></div>
+        <div class="stat" data-tip="Expected portfolio value after applying this scenario's price, volatility, drift, and/or correlation shocks."><div class="label">Stressed Expected Value</div><div class="value">${fmtMoney(d.stressed.expected_value)}</div></div>
+        <div class="stat" data-tip="Difference between stressed and baseline expected value, in dollars and as a percentage."><div class="label">Value Change</div><div class="value ${changeClass}">${fmtMoney(d.value_change)} (${(d.value_change_pct*100).toFixed(1)}%)</div></div>
+        <div class="stat" data-tip="How much the Value-at-Risk itself shifts under the stressed scenario versus baseline."><div class="label">VaR Change</div><div class="value ${d.var_change>0?'neg':'pos'}">${fmtMoney(d.var_change)}</div></div>
+      </div>
+      <div class="chart-box"><h3>Baseline vs. Stressed P&amp;L - ${d.scenario}</h3><div id="sx-hist" style="height:340px;"></div></div>`;
+    const bc = d.baseline.pnl_histogram.bin_edges.slice(0,-1).map((e,i)=>(e+d.baseline.pnl_histogram.bin_edges[i+1])/2);
+    const sc = d.stressed.pnl_histogram.bin_edges.slice(0,-1).map((e,i)=>(e+d.stressed.pnl_histogram.bin_edges[i+1])/2);
+    Plotly.newPlot('sx-hist', [
+      {x:bc, y:d.baseline.pnl_histogram.counts, type:'bar', name:'Baseline', marker:{color:'rgba(185,163,236,0.55)'}},
+      {x:sc, y:d.stressed.pnl_histogram.counts, type:'bar', name:'Stressed', marker:{color:'rgba(239,109,109,0.55)'}},
+    ], {...PLOT_TEMPLATE, barmode:'overlay', xaxis:{...PLOT_TEMPLATE.xaxis,title:'P&L ($)'}, yaxis:{...PLOT_TEMPLATE.yaxis,title:'Frequency'}}, PLOT_CFG);
+  }catch(e){ el.innerHTML = errorBox(e.message); }
+}
+</script>
+</body>
+</html>
