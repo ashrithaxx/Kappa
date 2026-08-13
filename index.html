@@ -55,7 +55,7 @@ header h1{font-family:var(--condensed); font-size:19px; font-weight:800; letter-
 header .tick{font-family:var(--nav); font-size:11px; letter-spacing:.12em; color:var(--text-faint); text-transform:uppercase;}
 nav{position:sticky; top:63px; z-index:19; display:flex; backdrop-filter:blur(18px); background:rgba(10,9,8,.4);
   border-bottom:1px solid var(--line); padding:0 32px; gap:2px; overflow-x:auto;}
-nav button{flex:1 1 0; background:none; border:none; color:var(--text-dim); font-family:var(--nav); font-weight:600;
+nav button{flex:1 1 0; background:none; border:none; color:var(--text-dim); font-family:Georgia,serif; font-weight:800;
   font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:14px 18px; cursor:pointer;
   border-bottom:2px solid transparent; white-space:nowrap; text-align:center; transition:color .25s;}
 nav button.active{color:var(--copper); border-bottom-color:var(--copper);}
@@ -73,9 +73,9 @@ main{position:relative; z-index:1; padding:28px 32px 80px; max-width:1280px; mar
 .panel h2{font-family:var(--condensed); font-size:14px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-faint); margin-bottom:16px; font-weight:700;}
 .field{margin-bottom:14px;}
 .field label{display:block; font-family:var(--condensed); font-weight:600; font-size:12.5px; letter-spacing:.03em; color:var(--text-dim); margin-bottom:5px;}
-.field input, .field select{width:100%; background:rgba(0,0,0,.18); border:1px solid var(--line); color:#fdfaf4;
-  padding:9px 11px; border-radius:8px; font-family:var(--condensed); font-size:14.5px; font-weight:600; letter-spacing:.02em; transition:border-color .2s,background .2s;}
-.field input:focus, .field select:focus{outline:none; border-color:var(--copper); background:rgba(0,0,0,.24);}
+.field input, .field select{width:100%; background:rgba(255,255,255,.03); border:1px solid var(--line); color:var(--text);
+  padding:9px 11px; border-radius:8px; font-family:var(--condensed); font-size:14.5px; letter-spacing:.02em; transition:border-color .2s,background .2s;}
+.field input:focus, .field select:focus{outline:none; border-color:var(--copper); background:rgba(255,255,255,.06);}
 .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 .asset-row{border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:8px; position:relative; background:rgba(255,255,255,.02);}
 .asset-row .rm{position:absolute; top:8px; right:10px; background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:14px;}
@@ -91,21 +91,12 @@ main{position:relative; z-index:1; padding:28px 32px 80px; max-width:1280px; mar
 .results{min-height:400px;}
 .stat-strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--line);
   border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-bottom:20px;}
-.stat{position:relative; overflow:hidden; cursor:help;
-  background:rgba(255,255,255,.055); padding:15px 17px; backdrop-filter:blur(26px) saturate(180%);
-  transition:transform .25s ease,box-shadow .25s ease,background .25s ease; z-index:1;}
-.stat::before{content:''; position:absolute; top:-60%; left:-30%; width:70%; height:220%;
-  background:linear-gradient(120deg,rgba(255,255,255,.12),transparent 60%); transform:rotate(18deg); pointer-events:none;}
-.stat:hover{transform:translateY(-3px); box-shadow:0 14px 34px rgba(0,0,0,.4); background:rgba(255,255,255,.09);}
-.stat .label{position:relative; font-family:var(--condensed); font-weight:600; font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;}
-.stat .value{position:relative; font-family:var(--condensed); font-size:23px; font-weight:700; letter-spacing:.01em; color:#fdfaf4;}
-.stat .value.pos{color:#8fd4c1;} .stat .value.neg{color:var(--red);}
-.stat[data-tip]:hover::after{content:attr(data-tip); position:absolute; left:50%; bottom:calc(100% + 10px); transform:translateX(-50%);
-  width:210px; background:rgba(14,11,9,.97); color:var(--text); font-family:var(--sans); font-weight:400; font-size:11.5px; line-height:1.55;
-  padding:10px 12px; border-radius:10px; border:1px solid var(--line-hi); box-shadow:0 14px 34px rgba(0,0,0,.5);
-  text-transform:none; letter-spacing:normal; z-index:30; pointer-events:none;}
-.stat[data-tip]:hover::before{content:''; position:absolute; left:50%; bottom:calc(100% + 4px); transform:translateX(-50%);
-  border:6px solid transparent; border-top-color:rgba(14,11,9,.97); z-index:30;}
+.stat{position:relative; overflow:hidden;
+  background:linear-gradient(150deg,rgba(255,138,92,.09),rgba(122,46,58,.06) 55%,rgba(185,163,236,.05));
+  padding:15px 17px; backdrop-filter:blur(22px) saturate(160%); z-index:1;}
+.stat .label{position:relative; font-family:var(--condensed); font-weight:600; font-size:11.5px; color:var(--copper); opacity:.75; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;}
+.stat .value{position:relative; font-family:var(--condensed); font-size:23px; font-weight:700; letter-spacing:.01em;}
+.stat .value.pos{color:var(--gold);} .stat .value.neg{color:var(--red);}
 .chart-box{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:20px;
   backdrop-filter:blur(22px) saturate(130%); box-shadow:0 10px 40px rgba(0,0,0,.3);}
 .chart-box h3{font-family:var(--condensed); font-size:13.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint); padding:6px 10px 0;}
@@ -170,8 +161,7 @@ main{position:relative; z-index:1; padding:28px 32px 80px; max-width:1280px; mar
 </div>
 
 <header>
-  <div class="brand" onclick="goTo('home')" title="Go to home"><span class="mark">&kappa;</span><h1>KAPPA <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">- Monte Carlo Risk Simulation</span></h1></div>
-  <div class="tick">GBM · OPTIONS · VAR / ES · STRESS TESTING</div>
+  <div class="brand" onclick="goTo('home')" title="Go to home"><span class="mark">&kappa;</span><h1>KAPPA <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;font-family:Georgia,serif;font-style:italic;">- Monte Carlo Risk Platform</span></h1></div>
 </header>
 
 <nav>
@@ -325,21 +315,21 @@ main{position:relative; z-index:1; padding:28px 32px 80px; max-width:1280px; mar
 
       <div class="glossary-entry">
         <h3>Geometric Brownian Motion (GBM)</h3>
-        <p>The stochastic differential equation driving every simulated price path, and its exact discretization used on the grid (no Euler bias, only Monte Carlo sampling error). Drift μ pulls the price up or down on average over time, while volatility σ scales the size of the random shocks W_t, so higher σ produces wider, noisier paths around that drift.</p>
+        <p>The stochastic differential equation driving every simulated price path, and its exact discretization used on the grid (no Euler bias, only Monte Carlo sampling error).</p>
         <div class="glossary-formula">$$dS_t = \mu S_t\,dt + \sigma S_t\,dW_t$$</div>
         <div class="glossary-formula">$$S_{t+\Delta t} = S_t \exp\!\left[\left(\mu - \tfrac{1}{2}\sigma^2\right)\Delta t + \sigma\sqrt{\Delta t}\,Z\right],\quad Z \sim \mathcal{N}(0,1)$$</div>
       </div>
 
       <div class="glossary-entry">
         <h3>Black-Scholes Closed Form</h3>
-        <p>The analytical benchmark the Monte Carlo option price is checked against, under the same risk-neutral assumptions. d1 and d2 measure how far the current price sits from the strike in volatility-adjusted, risk-neutral terms; N(·) is the standard normal cumulative distribution, so N(d2) is roughly the probability the option finishes in the money.</p>
+        <p>The analytical benchmark the Monte Carlo option price is checked against, under the same risk-neutral assumptions.</p>
         <div class="glossary-formula">$$d_1 = \frac{\ln(S_0/K) + \left(r + \tfrac{1}{2}\sigma^2\right)T}{\sigma\sqrt{T}}, \qquad d_2 = d_1 - \sigma\sqrt{T}$$</div>
         <div class="glossary-formula">$$C = S_0 N(d_1) - K e^{-rT} N(d_2) \qquad\qquad P = K e^{-rT} N(-d_2) - S_0 N(-d_1)$$</div>
       </div>
 
       <div class="glossary-entry">
         <h3>Monte Carlo Option Price</h3>
-        <p>The discounted average payoff across simulated terminal prices, with a standard error that shrinks as more paths are added, this is the convergence shown against Black-Scholes. Because SE shrinks with 1/√M, cutting the error in half requires roughly 4x as many simulated paths, which is why the convergence chart flattens out slowly at high path counts.</p>
+        <p>The discounted average payoff across simulated terminal prices, with a standard error that shrinks as more paths are added, this is the convergence shown against Black-Scholes.</p>
         <div class="glossary-formula">$$\hat{C} = e^{-rT} \cdot \frac{1}{M}\sum_{i=1}^{M} \max\!\left(S_T^{(i)} - K,\ 0\right), \qquad \text{SE} = \frac{\sigma_{\text{payoff}}}{\sqrt{M}}$$</div>
       </div>
 
@@ -353,13 +343,13 @@ main{position:relative; z-index:1; padding:28px 32px 80px; max-width:1280px; mar
 
       <div class="glossary-entry">
         <h3>Risk Contribution (Euler Allocation)</h3>
-        <p>Splits total portfolio VaR across assets by each asset's covariance with the portfolio's P&amp;L, contributions sum exactly to the total VaR. β_i captures how much each asset co-moves with total portfolio losses, an asset can carry outsized risk contribution relative to its size if it's highly correlated with the rest of the book.</p>
+        <p>Splits total portfolio VaR across assets by each asset's covariance with the portfolio's P&amp;L, contributions sum exactly to the total VaR.</p>
         <div class="glossary-formula">$$\text{VaR}_i = \beta_i \cdot \text{VaR}_{\text{total}}, \qquad \beta_i = \frac{\text{Cov}(\text{P\&L}_i,\ \text{P\&L}_p)}{\text{Var}(\text{P\&L}_p)}$$</div>
       </div>
 
       <div class="glossary-entry">
         <h3>Stress Testing Shocks</h3>
-        <p>Each scenario perturbs the baseline portfolio parameters before re-running the same simulation and risk pipeline. Price shocks move S0 directly, volatility and drift shocks scale or shift σ and μ, and correlation shocks nudge ρ while keeping it clipped to a valid [-1,1] range, letting you see how VaR and expected value react to each stress independently.</p>
+        <p>Each scenario perturbs the baseline portfolio parameters before re-running the same simulation and risk pipeline.</p>
         <div class="glossary-formula">$$S_0' = S_0 (1 + \text{shock}) \qquad \sigma' = \sigma \cdot m \qquad \mu' = \mu + \Delta\mu \qquad \rho' = \text{clip}(\rho + \Delta\rho,\ -1,\ 1)$$</div>
       </div>
     </div>
@@ -663,7 +653,7 @@ async function runPortfolio(){
       </div>`;
     const centers = d.pnl_histogram.bin_edges.slice(0,-1).map((e,i)=>(e+d.pnl_histogram.bin_edges[i+1])/2);
     Plotly.newPlot('pf-hist', [
-      {x:centers, y:d.pnl_histogram.counts, type:'bar', marker:{color: centers.map(c=> c <= -d.risk.historical.var ? '#ef6d6d' : '#8fd4c1')}},
+      {x:centers, y:d.pnl_histogram.counts, type:'bar', marker:{color: centers.map(c=> c <= -d.risk.historical.var ? '#ef6d6d' : '#b9a3ec')}},
     ], {...PLOT_TEMPLATE,
       shapes:[{type:'line', x0:-d.risk.historical.var, x1:-d.risk.historical.var, y0:0, y1:1, yref:'paper', line:{color:'#ff8a5c', dash:'dash'}}],
       xaxis:{...PLOT_TEMPLATE.xaxis,title:'P&L ($)'}, yaxis:{...PLOT_TEMPLATE.yaxis,title:'Frequency'}}, PLOT_CFG);
