@@ -1,10 +1,4 @@
-"""
-Week 4 — FinTech Product: FastAPI service layer.
 
-Thin HTTP wrapper around the Week 1-3 quant engine (app/quant, app/models).
-No business logic lives here — every endpoint validates a request, calls
-into the existing dataclasses/functions, and serializes the result.
-"""
 
 from __future__ import annotations
 
