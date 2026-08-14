@@ -1,10 +1,6 @@
 """
 Structured portfolio risk report.
 
-Mirrors the role of ``app/quant/derivatives/reporting.py`` in Week 2:
-bundles a simulation, both VaR/ES methods, and a plain-text dashboard
-into one call, rather than requiring callers to wire the pieces
-together by hand each time.
 """
 
 from __future__ import annotations
