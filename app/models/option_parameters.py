@@ -1,12 +1,5 @@
 """
 European option parameter model.
-
-Deliberately separate from ``MarketParameters`` (Week 1): market
-parameters describe the *physical-measure* dynamics of an asset (drift
-mu estimated from history), whereas option pricing happens under the
-*risk-neutral measure*, where the drift is the risk-free rate r, not
-mu. Keeping these as distinct models makes that distinction structural
-rather than a convention someone has to remember to apply correctly.
 """
 
 from __future__ import annotations
@@ -99,12 +92,6 @@ class OptionParameters:
 @dataclass(frozen=True)
 class OptionSimulationConfig:
     """Numerical controls for option-pricing Monte Carlo runs.
-
-    Distinct from Week 1's ``SimulationParameters`` because European
-    vanilla options never need ``steps`` or ``mode`` — they are
-    terminal-dependent, so pricing always uses the O(M) direct
-    terminal-sampling shortcut. ``steps``/``mode`` reappear once
-    path-dependent (Asian/Barrier) options are added.
     """
 
     simulations: int
