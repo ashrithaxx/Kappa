@@ -3,7 +3,7 @@ Monte Carlo option pricing under the risk-neutral measure.
 
 RISK-NEUTRAL VS. PHYSICAL MEASURE
 ----------------------------------
-Week 1's GBM engine simulates the *physical* (real-world) measure,
+The GBM engine simulates the *physical* (real-world) measure,
 where the drift is the historically-estimated expected return, mu.
 Option pricing is different: no-arbitrage valuation requires
 discounting expected payoffs *under the risk-neutral measure*, where
@@ -12,12 +12,12 @@ real-world expected return. This is not a modeling choice — it's a
 consequence of the fact that a replicating/hedging portfolio earns the
 risk-free rate under absence of arbitrage. So:
 
-    Physical measure:      dS_t = mu S_t dt + sigma S_t dW_t   (Week 1)
+    Physical measure:      dS_t = mu S_t dt + sigma S_t dW_t
     Risk-neutral measure:  dS_t =  r S_t dt + sigma S_t dW_t   (this module)
 
 Everything else about the GBM SDE — including sigma and its exact
-discretization — is unchanged. This module therefore reuses Week 1's
-``simulate_gbm`` terminal-mode machinery, just called with
+discretization — is unchanged. This module therefore reuses the GBM
+engine's terminal-mode machinery, just called with
 ``drift=risk_free_rate`` instead of the physical mu.
 
 PRICING EQUATION
@@ -57,7 +57,7 @@ def simulate_risk_neutral_terminal_prices(
 ) -> np.ndarray:
     """Sample S_T under the risk-neutral GBM measure (drift = r).
 
-    Reuses Week 1's ``simulate_gbm`` in terminal-only mode — for
+    Reuses the GBM engine in terminal-only mode — for
     European vanilla options only S_T matters, so full paths are never
     generated. This makes the pricer O(M) in both time and memory,
     independent of any notion of "steps" (there is no path to step
@@ -65,8 +65,8 @@ def simulate_risk_neutral_terminal_prices(
 
     Note ``steps`` is passed as 1 purely because ``simulate_gbm``'s
     signature expects it; in terminal mode the value is mathematically
-    irrelevant (see Week 1's ``gbm.py`` — terminal sampling uses
-    Brownian self-similarity and does not depend on step count).
+    irrelevant (terminal sampling uses Brownian self-similarity and does
+    not depend on step count).
     """
     result = simulate_gbm(
         initial_price=spot,
