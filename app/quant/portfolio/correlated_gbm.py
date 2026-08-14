@@ -1,11 +1,6 @@
 """
 Correlated multi-asset Geometric Brownian Motion.
 
-Extends Week 1's single-asset GBM (``app/quant/gbm.py``) to n assets
-whose Brownian drivers are correlated according to a given correlation
-matrix, via Cholesky decomposition. Reuses the same terminal-only
-shortcut from Week 1 (self-similarity of Brownian motion), applied
-independently along the asset axis after correlating.
 """
 
 from __future__ import annotations
@@ -48,8 +43,7 @@ def simulate_correlated_terminal_prices(
     2. Correlate them via the Cholesky factor L of the correlation
        matrix (Sigma = L L^T): Z_corr = Z @ L^T, so that
        Corr(Z_corr) = Sigma exactly in expectation.
-    3. Apply each asset's own GBM terminal-price formula (Week 1,
-       physical measure) to its column of Z_corr:
+    3. Apply each asset's own GBM terminal-price formula  to its column of Z_corr:
 
            S_T = S0 * exp[(mu - 0.5*sigma^2)*T + sigma*sqrt(T)*Z_corr]
 
@@ -88,8 +82,7 @@ def realized_correlation(terminal_prices: np.ndarray) -> np.ndarray:
 
     Compares against ``portfolio.correlation_matrix`` in tests/notebooks
     — converges to the target as ``simulations -> infinity`` but will
-    show finite-sample deviation at any fixed M, the same way simulated
-    moments deviate from theoretical ones in Week 1.
+    show finite-sample deviation at any fixed M
     """
     log_prices = np.log(terminal_prices)
     return np.corrcoef(log_prices, rowvar=False)
