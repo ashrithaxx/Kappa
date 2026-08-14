@@ -1,11 +1,6 @@
 """
 Multi-asset portfolio parameter model.
 
-Week 1/2 models describe a single asset. A portfolio adds a
-cross-sectional dimension — weights and a correlation structure between
-assets — without changing how any individual asset's GBM dynamics work.
-Kept separate from ``MarketParameters`` so single-asset code is
-untouched by this addition.
 """
 
 from __future__ import annotations
